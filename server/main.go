@@ -18,7 +18,14 @@ func main() {
 	}
 	defer db.Close()
 
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS users (name TEXT, email TEXT, password TEXT)")
+	/* 	_, err = db.Exec("DROP TABLE IF EXISTS users")
+	   	if err != nil {
+	   		log.Fatal(err)
+	   	} else {
+	   		log.Println("Table users dropped successfully")
+	   	} */
+
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS users (id UUID PRIMARY KEY ,name TEXT, email TEXT, password TEXT)")
 	if err != nil {
 		log.Fatal(err)
 	}
