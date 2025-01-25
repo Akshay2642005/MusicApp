@@ -3,6 +3,10 @@ services:
     container_name: go-app
     image: Akshay2642005/go-app:1.0.1
     build: .
+    develop:
+      watch:
+        - action: rebuild
+          path: .
     environment:
       DATABASE_URL: "host=go_db user=root password=root dbname=musicapp sslmode=disable"
     ports:

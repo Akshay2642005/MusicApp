@@ -12,13 +12,13 @@ import (
 )
 
 func main() {
-	pgdb, err := db.ConnectToDB()
+	db, err := db.ConnectToDB()
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer pgdb.Close()
+	defer db.Close()
 
-	_, err = pgdb.Exec("CREATE TABLE IF NOT EXISTS users (name TEXT, email TEXT, password TEXT)")
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS users (name TEXT, email TEXT, password TEXT)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,8 +26,8 @@ func main() {
 
 	// Handle Routes
 
-	r.HandleFunc("/signup", routes.SignupHandler(pgdb)).Methods("POST")
-	r.HandleFunc("/login", routes.LoginHandler(pgdb)).Methods("POST")
+	r.HandleFunc("/signup", routes.SignupHandler(db)).Methods("POST")
+	r.HandleFunc("/login", routes.LoginHandler(db)).Methods("POST")
 
 	// Start Server
 	fmt.Println("Server started on port :8000")
