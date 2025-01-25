@@ -1,0 +1,91 @@
+# ---- General ----
+.DS_Store
+*.log
+*.tmp
+*.bak
+*.cache
+
+# ---- Environment Files ----
+.client/.env
+.server/.env
+*.env
+
+# ---- Flutter (Client) ----
+# Flutter generated files
+.client/.dart_tool/
+.client/.flutter-plugins
+.client/.flutter-plugins-dependencies
+.client/.packages
+.client/.idea/
+.client/.vscode/
+.client/build/
+.client/generated_plugin_registrant.dart
+
+# iOS specific files
+.client/ios/Flutter/Flutter.framework
+.client/ios/Flutter/Flutter.podspec
+.client/ios/.symlinks/
+.client/ios/Pods/
+.client/ios/Runner.xcworkspace/
+.client/ios/Runner.xcarchive/
+.client/ios/build/
+
+# Android specific files
+.client/android/.gradle/
+.client/android/.idea/
+.client/android/local.properties
+.client/android/app/proguard-rules.pro
+.client/android/app/debug.keystore
+.client/android/build/
+.client/android/app/build/
+
+# Web specific files
+.client/web/.dart_tool/
+.client/web/build/
+
+# Miscellaneous
+.client/pubspec.lock
+
+# ---- Golang (Server) ----
+# Binaries
+.server/bin/
+.server/*.exe
+.server/*.dll
+.server/*.so
+.server/*.dylib
+
+# Build and dependency directories
+.server/build/
+.server/vendor/
+
+# Generated files
+.server/*.log
+.server/*.out
+.server/*.test
+.server/*.tmp
+
+# Modules and caches
+.server/go.sum
+.server/go.mod~
+.server/.vscode/
+.server/.idea/
+.server/.cache/
+
+# ---- Global OS/IDE Specific ----
+# macOS
+*.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Linux
+*~
+
+# JetBrains IDEs (IntelliJ, PyCharm, etc.)
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
