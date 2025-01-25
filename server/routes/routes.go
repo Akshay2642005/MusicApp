@@ -4,11 +4,16 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"os"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var JwtKey = []byte(os.Getenv("JWT_SECRET_KEY"))
 
 type User struct {
 	ID       string `json:"id"`
@@ -21,6 +26,12 @@ type UserCreate struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type Claims struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
+	jwt.StandardClaims
 }
 
 func SignupHandler(db *sql.DB) http.HandlerFunc {
@@ -76,20 +87,42 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		var storedPasswordHash string
 
-		row := db.QueryRow("SELECT 1 FROM users WHERE email = $1 AND password = $2", user.Email, user.Password)
-		var exists int
-		err = row.Scan(&exists)
-		if err == sql.ErrNoRows {
-			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
-			return
-		} else if err != nil {
+		row := db.QueryRow("SELECT password FROM users WHERE email = $1", user.Email)
+		err = row.Scan(&storedPasswordHash)
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} else if err == sql.ErrNoRows {
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 			return
 		}
 
+		err = bcrypt.CompareHashAndPassword([]byte(storedPasswordHash), []byte(user.Password))
+		if err != nil {
+			http.Error(w, "Invalid Password", http.StatusUnauthorized)
+			return
+		}
+
+		expirationTime := time.Now().Add(time.Hour * 24)
+		claims := &Claims{
+			Email: user.Email,
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: expirationTime.Unix(),
+			},
+		}
+
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		tokenString, err := token.SignedString(JwtKey)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		w.WriteHeader(http.StatusOK)
-		err = json.NewEncoder(w).Encode(user)
+		err = json.NewEncoder(w).Encode(map[string]string{
+			"token": tokenString,
+		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
