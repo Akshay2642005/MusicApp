@@ -49,3 +49,4 @@ bundles/
 vendor/pkg/
 pyenv
 Vagrantfile
+tableBackup.txt

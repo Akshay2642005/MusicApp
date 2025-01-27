@@ -3,8 +3,10 @@ package routes
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"musicapp-server/middlewares"
+	"musicapp-server/models"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -13,38 +15,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var JwtKey = []byte(os.Getenv("JWT_SECRET_KEY"))
-
-type User struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type UserCreate struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type Claims struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
-	jwt.StandardClaims
-}
-
-type Song struct {
-	ID     string `json:"id"`
-	Title  string `json:"title"`
-	Artist string `json:"artist"`
-	Album  string `json:"album"`
-	Genre  string `json:"genre"`
-}
-
 func SignupHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var user UserCreate
+		var user models.UserCreate
 		err := json.NewDecoder(r.Body).Decode(&user)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -72,7 +45,7 @@ func SignupHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		newUser := User{
+		newUser := models.User{
 			ID:       userID,
 			Name:     user.Name,
 			Email:    user.Email,
@@ -89,7 +62,7 @@ func SignupHandler(db *sql.DB) http.HandlerFunc {
 
 func LoginHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var user User
+		var user models.User
 		err := json.NewDecoder(r.Body).Decode(&user)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -114,7 +87,7 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		expirationTime := time.Now().Add(time.Hour * 24)
-		claims := &Claims{
+		claims := &models.Claims{
 			Email: user.Email,
 			StandardClaims: jwt.StandardClaims{
 				ExpiresAt: expirationTime.Unix(),
@@ -122,7 +95,7 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-		tokenString, err := token.SignedString(JwtKey)
+		tokenString, err := token.SignedString(models.JwtKey)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -140,41 +113,12 @@ func LoginHandler(db *sql.DB) http.HandlerFunc {
 
 func HomeHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Query to fetch songs
-		query := `SELECT id, title, artist, album, genre FROM songs`
-
-		// Execute the query
-		rows, err := db.Query(query)
-		if err != nil {
-			http.Error(w, "Failed to fetch songs from database", http.StatusInternalServerError)
+		userEmail, ok := r.Context().Value(middlewares.Key("userEmail")).(string)
+		if !ok {
+			http.Error(w, "Unable to fetch user information", http.StatusInternalServerError)
 			return
 		}
-		defer rows.Close()
-
-		// Slice to store the songs
-		var songs []Song
-
-		// Iterate through the rows and populate the songs slice
-		for rows.Next() {
-			var song Song
-			if err := rows.Scan(&song.ID, &song.Title, &song.Artist, &song.Album, &song.Genre); err != nil {
-				http.Error(w, "Error scanning song data", http.StatusInternalServerError)
-				return
-			}
-			songs = append(songs, song)
-		}
-
-		// Check for errors encountered during iteration
-		if err := rows.Err(); err != nil {
-			http.Error(w, "Error iterating through songs", http.StatusInternalServerError)
-			return
-		}
-
-		// Respond with the list of songs in JSON format
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(songs); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-			return
-		}
+		fmt.Fprintf(w, "Welcome to the Home page, %s!", userEmail)
+		/* http.Redirect(w, r, "home/songs", http.StatusSeeOther) */
 	}
 }
